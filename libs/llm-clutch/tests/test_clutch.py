@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from testing.conftest import make_mock_backend
 
 from llm_clutch import EngineState, EngineStatus, LLMClutch, ShiftResult
 from llm_clutch.backend.base import ModelBackend
@@ -13,37 +14,12 @@ from llm_clutch.backend.exceptions import (
 from llm_clutch.core.infra import InfraManager
 
 
-class MockBackend(ModelBackend):
-    """Mock backend for testing."""
-
-    def __init__(self) -> None:
-        """Initialize the mock backend."""
-        self.active_model: str | None = None
-        self.available_memory = 1000000  # 1MB default
-
-    async def load_model(self, model_name: str) -> None:
-        """Mock load_model."""
-        self.active_model = model_name
-
-    async def unload_model(self) -> None:
-        """Mock unload_model."""
-        self.active_model = None
-
-    async def get_available_memory(self) -> int:
-        """Mock get_available_memory."""
-        return self.available_memory
-
-    async def get_active_model(self) -> str | None:
-        """Mock get_active_model."""
-        return self.active_model
-
-
 class TestLLMClutchInit:
     """Tests for LLMClutch initialization."""
 
     def test_init_with_valid_parameters(self) -> None:
         """Test LLMClutch initialization with valid parameters."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         infra_manager = InfraManager(["10.0.0.1"])
 
         clutch = LLMClutch(backend, infra_manager, min_nodes=2)
@@ -58,7 +34,7 @@ class TestLLMClutchInit:
 
     def test_init_with_default_min_nodes(self) -> None:
         """Test LLMClutch initialization with default min_nodes."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         infra_manager = InfraManager(["10.0.0.1"])
 
         clutch = LLMClutch(backend, infra_manager)
@@ -67,7 +43,7 @@ class TestLLMClutchInit:
 
     def test_init_with_invalid_min_nodes_raises_error(self) -> None:
         """Test that min_nodes < 1 raises ValueError."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         infra_manager = InfraManager(["10.0.0.1"])
 
         with pytest.raises(ValueError, match="min_nodes must be at least 1"):
@@ -80,8 +56,7 @@ class TestRevMatch:
     @pytest.mark.asyncio
     async def test_rev_match_success(self) -> None:
         """Test successful rev_match when topology is healthy and memory sufficient."""
-        backend = MockBackend()
-        backend.available_memory = 1000000  # 1MB
+        backend = make_mock_backend(available_memory=1000000)  # 1MB
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -99,8 +74,7 @@ class TestRevMatch:
     @pytest.mark.asyncio
     async def test_rev_match_failure_insufficient_memory(self) -> None:
         """Test rev_match fails when insufficient memory."""
-        backend = MockBackend()
-        backend.available_memory = 100000  # 100KB
+        backend = make_mock_backend(available_memory=100000)  # 100KB
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -116,7 +90,7 @@ class TestRevMatch:
     @pytest.mark.asyncio
     async def test_rev_match_failure_nodes_unreachable(self) -> None:
         """Test rev_match fails when cluster nodes are unreachable."""
-        backend = MockBackend()
+        backend = make_mock_backend()
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -155,7 +129,7 @@ class TestRevMatch:
     @pytest.mark.asyncio
     async def test_rev_match_respects_min_nodes(self) -> None:
         """Test that rev_match passes correct min_nodes to verify_topology."""
-        backend = MockBackend()
+        backend = make_mock_backend()
 
         infra_manager = InfraManager(["10.0.0.1", "10.0.0.2", "10.0.0.3"])
         with patch.object(
@@ -175,7 +149,7 @@ class TestDisengage:
     @pytest.mark.asyncio
     async def test_disengage_success(self) -> None:
         """Test successful disengage."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         backend.active_model = "llama-7b"
 
         infra_manager = InfraManager(["10.0.0.1"])
@@ -190,7 +164,7 @@ class TestDisengage:
     @pytest.mark.asyncio
     async def test_disengage_skipped_when_no_active_model(self) -> None:
         """Test disengage is skipped when no model is active."""
-        backend = MockBackend()
+        backend = make_mock_backend()
 
         infra_manager = InfraManager(["10.0.0.1"])
         clutch = LLMClutch(backend, infra_manager)
@@ -222,7 +196,7 @@ class TestEngage:
     @pytest.mark.asyncio
     async def test_engage_success(self) -> None:
         """Test successful engage."""
-        backend = MockBackend()
+        backend = make_mock_backend()
 
         infra_manager = InfraManager(["10.0.0.1"])
         clutch = LLMClutch(backend, infra_manager)
@@ -254,8 +228,7 @@ class TestUpshift:
     @pytest.mark.asyncio
     async def test_upshift_success(self) -> None:
         """Test successful upshift."""
-        backend = MockBackend()
-        backend.available_memory = 1000000
+        backend = make_mock_backend(available_memory=1000000)
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -278,8 +251,7 @@ class TestUpshift:
     @pytest.mark.asyncio
     async def test_upshift_failure_rev_match(self) -> None:
         """Test upshift fails when rev_match fails."""
-        backend = MockBackend()
-        backend.available_memory = 100000  # Not enough memory
+        backend = make_mock_backend(available_memory=100000)  # Not enough memory
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -351,8 +323,7 @@ class TestUpshift:
     @pytest.mark.asyncio
     async def test_upshift_from_idle_state(self) -> None:
         """Test upshift when no model is currently active."""
-        backend = MockBackend()
-        backend.available_memory = 1000000
+        backend = make_mock_backend(available_memory=1000000)
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -376,8 +347,7 @@ class TestDownshift:
     @pytest.mark.asyncio
     async def test_downshift_success(self) -> None:
         """Test successful downshift."""
-        backend = MockBackend()
-        backend.available_memory = 1000000
+        backend = make_mock_backend(available_memory=1000000)
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -400,8 +370,7 @@ class TestDownshift:
     @pytest.mark.asyncio
     async def test_downshift_failure_rev_match(self) -> None:
         """Test downshift fails when rev_match fails."""
-        backend = MockBackend()
-        backend.available_memory = 100000  # Not enough memory
+        backend = make_mock_backend(available_memory=100000)  # Not enough memory
 
         infra_manager = InfraManager(["10.0.0.1"])
         with patch.object(
@@ -450,7 +419,7 @@ class TestStatus:
 
     def test_status_returns_current_state(self) -> None:
         """Test that status returns current engine state."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         infra_manager = InfraManager(["10.0.0.1"])
 
         clutch = LLMClutch(backend, infra_manager)
@@ -468,7 +437,7 @@ class TestStatus:
 
     def test_status_includes_shift_result(self) -> None:
         """Test that status includes last shift result."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         infra_manager = InfraManager(["10.0.0.1"])
 
         clutch = LLMClutch(backend, infra_manager)
@@ -485,7 +454,7 @@ class TestStatus:
 
     def test_status_with_error_state(self) -> None:
         """Test status when engine is in error state."""
-        backend = MockBackend()
+        backend = make_mock_backend()
         infra_manager = InfraManager(["10.0.0.1"])
 
         clutch = LLMClutch(backend, infra_manager)
