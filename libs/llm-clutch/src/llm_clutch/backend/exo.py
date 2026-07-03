@@ -1,5 +1,7 @@
 """Exo backend implementation for LLM cluster management."""
 
+from typing import Any
+
 import httpx
 import structlog
 from tenacity import (
@@ -17,20 +19,6 @@ from llm_clutch.backend.exceptions import (
 )
 
 logger = structlog.get_logger(__name__)
-
-# Retry configuration for Tenacity
-RETRY_CONFIG = {
-    "stop": stop_after_attempt(3),
-    "wait": wait_exponential(multiplier=1, min=1, max=10),
-    "retry": retry_if_exception_type(
-        (
-            httpx.ConnectError,
-            httpx.TimeoutException,
-            httpx.HTTPStatusError,
-        )
-    ),
-    "reraise": True,
-}
 
 
 class ExoBackend(ModelBackend):
@@ -118,7 +106,7 @@ class ExoBackend(ModelBackend):
         self,
         method: str,
         endpoint: str,
-        **kwargs,  # type: ignore
+        **kwargs: Any,  # type: ignore[misc]
     ) -> httpx.Response:
         """Make an HTTP request with Tenacity retry logic.
 
@@ -138,11 +126,22 @@ class ExoBackend(ModelBackend):
         client = await self._get_client()
 
         # Use AsyncRetrying to wrap the request with retry logic
-        retrying = AsyncRetrying(**RETRY_CONFIG)
+        retrying = AsyncRetrying(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=1, max=10),
+            retry=retry_if_exception_type(
+                (
+                    httpx.ConnectError,
+                    httpx.TimeoutException,
+                    httpx.HTTPStatusError,
+                )
+            ),
+            reraise=True,
+        )
 
         async def request_with_status_check() -> httpx.Response:
             """Make the request and raise on 5xx status codes."""
-            response = await client.request(
+            response = await client.request(  # type: ignore[arg-type]
                 method,
                 endpoint,
                 timeout=self.timeout_seconds,
