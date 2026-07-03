@@ -93,6 +93,10 @@ class InfraManager:
     async def _check_node_with_retry(self, ip: str) -> NodeStatus:
         """Internal method with retry logic for TCP socket probes.
 
+        Uses exponential backoff with timing: 1s, 2s, 4s, up to 10s max
+        between attempts. This provides adaptive retry behavior for
+        transient network failures.
+
         Args:
             ip: IP address of the node to check.
 
@@ -103,7 +107,6 @@ class InfraManager:
             OSError or TimeoutError after all retries are exhausted.
         """
         start_time = time.time()
-        checked_at = datetime.now()
 
         reader, writer = await asyncio.wait_for(
             asyncio.open_connection(ip, self.port),
@@ -113,6 +116,7 @@ class InfraManager:
         await writer.wait_closed()
 
         latency_ms = (time.time() - start_time) * 1000
+        checked_at = datetime.now()
         status = NodeStatus(
             ip=ip,
             reachable=True,

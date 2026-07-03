@@ -95,7 +95,10 @@ class TestCheckNode:
         manager = InfraManager(["10.0.0.1"], timeout_seconds=0.01)
 
         async def slow_connect(*args, **kwargs):  # type: ignore
-            await asyncio.sleep(1)
+            """Simulate a slow connection that will timeout."""
+            await asyncio.sleep(10)
+            # This will never be reached due to asyncio.wait_for timeout
+            raise RuntimeError("Should not reach this")
 
         with patch("asyncio.open_connection", side_effect=slow_connect):
             status = await manager.check_node("10.0.0.1")
