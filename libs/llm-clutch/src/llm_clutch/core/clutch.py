@@ -248,29 +248,29 @@ class LLMClutch:
             previous_model=previous_model,
         )
 
+        # Step 1: Rev match (pre-condition check)
+        if not await self.rev_match(required_ram):
+            error_msg = (
+                f"Cannot upshift to {heavy_model}: "
+                f"insufficient resources (required {required_ram} bytes)"
+            )
+            logger.error(
+                "upshift_failed_rev_match",
+                heavy_model=heavy_model,
+                required_ram=required_ram,
+            )
+            self._last_shift_result = ShiftResult(
+                success=False,
+                previous_model=previous_model,
+                new_model=None,
+                error=error_msg,
+            )
+            raise ValueError(error_msg)
+
+        # Rev match passed, now we're committed to the shift
+        self._state = EngineState.SHIFTING
+
         try:
-            # Step 1: Rev match (pre-condition check)
-            if not await self.rev_match(required_ram):
-                error_msg = (
-                    f"Cannot upshift to {heavy_model}: "
-                    f"insufficient resources (required {required_ram} bytes)"
-                )
-                logger.error(
-                    "upshift_failed_rev_match",
-                    heavy_model=heavy_model,
-                    required_ram=required_ram,
-                )
-                self._last_shift_result = ShiftResult(
-                    success=False,
-                    previous_model=previous_model,
-                    new_model=None,
-                    error=error_msg,
-                )
-                raise ValueError(error_msg)
-
-            # Rev match passed, now we're committed to the shift
-            self._state = EngineState.SHIFTING
-
             # Step 2: Disengage
             await self.disengage()
 
@@ -290,9 +290,6 @@ class LLMClutch:
                 new_model=heavy_model,
             )
 
-        except ValueError:
-            # Re-raise ValueError from rev_match failure without changing state
-            raise
         except Exception as e:
             logger.error(
                 "upshift_failed",
@@ -346,29 +343,29 @@ class LLMClutch:
             previous_model=previous_model,
         )
 
+        # Step 1: Rev match (pre-condition check)
+        if not await self.rev_match(required_ram):
+            error_msg = (
+                f"Cannot downshift to {light_model}: "
+                f"insufficient resources (required {required_ram} bytes)"
+            )
+            logger.error(
+                "downshift_failed_rev_match",
+                light_model=light_model,
+                required_ram=required_ram,
+            )
+            self._last_shift_result = ShiftResult(
+                success=False,
+                previous_model=previous_model,
+                new_model=None,
+                error=error_msg,
+            )
+            raise ValueError(error_msg)
+
+        # Rev match passed, now we're committed to the shift
+        self._state = EngineState.SHIFTING
+
         try:
-            # Step 1: Rev match (pre-condition check)
-            if not await self.rev_match(required_ram):
-                error_msg = (
-                    f"Cannot downshift to {light_model}: "
-                    f"insufficient resources (required {required_ram} bytes)"
-                )
-                logger.error(
-                    "downshift_failed_rev_match",
-                    light_model=light_model,
-                    required_ram=required_ram,
-                )
-                self._last_shift_result = ShiftResult(
-                    success=False,
-                    previous_model=previous_model,
-                    new_model=None,
-                    error=error_msg,
-                )
-                raise ValueError(error_msg)
-
-            # Rev match passed, now we're committed to the shift
-            self._state = EngineState.SHIFTING
-
             # Step 2: Disengage
             await self.disengage()
 
@@ -388,9 +385,6 @@ class LLMClutch:
                 new_model=light_model,
             )
 
-        except ValueError:
-            # Re-raise ValueError from rev_match failure without changing state
-            raise
         except Exception as e:
             logger.error(
                 "downshift_failed",
