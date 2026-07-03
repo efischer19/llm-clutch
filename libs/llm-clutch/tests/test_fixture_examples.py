@@ -68,9 +68,7 @@ class TestFixtureUsageExamples:
     ) -> None:
         """Test combining custom backend and infrastructure."""
         backend = make_mock_backend(available_memory=10000000)  # 10MB
-        infra = make_mock_infra_manager(
-            node_ips=["10.0.0.1", "10.0.0.2", "10.0.0.3"]
-        )
+        infra = make_mock_infra_manager(node_ips=["10.0.0.1", "10.0.0.2", "10.0.0.3"])
 
         clutch = make_mock_clutch(backend=backend, infra_manager=infra, min_nodes=2)
 
@@ -95,9 +93,9 @@ class TestFixtureUsageExamples:
 @pytest.mark.parametrize(
     "available_memory,required_memory,should_fit",
     [
-        (1000000, 500000, True),   # 1MB available, 500KB required
-        (500000, 500000, True),    # Exact fit
-        (499999, 500000, False),   # Just under requirement
+        (1000000, 500000, True),  # 1MB available, 500KB required
+        (500000, 500000, True),  # Exact fit
+        (499999, 500000, False),  # Just under requirement
         (100000, 1000000, False),  # Way too small
     ],
 )
