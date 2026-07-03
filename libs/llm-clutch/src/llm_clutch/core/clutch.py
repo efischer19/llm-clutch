@@ -1,7 +1,7 @@
 """Clutch engine orchestrator for LLM model management."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 import structlog
@@ -42,7 +42,7 @@ class ShiftResult:
     previous_model: str | None
     new_model: str | None
     error: str | None = None
-    timestamp: datetime = field(default_factory=lambda: datetime.now())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -302,8 +302,8 @@ class LLMClutch:
                 exc_info=True,
             )
 
-            # If we disengaged but failed to engage, we're in a critical state
-            if previous_model != self._active_model and self._active_model is None:
+            # If we had a model before but now we don't, cluster is model-less
+            if previous_model is not None and self._active_model is None:
                 logger.critical(
                     "upshift_critical_state",
                     message="cluster_is_now_model_less",
@@ -400,8 +400,8 @@ class LLMClutch:
                 exc_info=True,
             )
 
-            # If we disengaged but failed to engage, we're in a critical state
-            if previous_model != self._active_model and self._active_model is None:
+            # If we had a model before but now we don't, cluster is model-less
+            if previous_model is not None and self._active_model is None:
                 logger.critical(
                     "downshift_critical_state",
                     message="cluster_is_now_model_less",
