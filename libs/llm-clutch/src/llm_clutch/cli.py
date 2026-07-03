@@ -197,7 +197,6 @@ def upshift(ctx: click.Context, model: str, ram: int, output_json: bool) -> None
         engine_status = clutch_engine.status()
 
         if output_json:
-
             result = engine_status.last_shift_result
             output_data = {
                 "success": result.success if result else False,
@@ -261,7 +260,6 @@ def downshift(ctx: click.Context, model: str, ram: int, output_json: bool) -> No
         engine_status = clutch_engine.status()
 
         if output_json:
-
             result = engine_status.last_shift_result
             output_data = {
                 "success": result.success if result else False,
