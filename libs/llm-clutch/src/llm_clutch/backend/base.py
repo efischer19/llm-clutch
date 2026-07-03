@@ -32,7 +32,6 @@ class ModelBackend(ABC):
             ModelLoadError: If model loading fails.
             InsufficientMemoryError: If there is insufficient memory to load the model.
         """
-        pass
 
     @abstractmethod
     async def unload_model(self) -> None:
@@ -41,7 +40,6 @@ class ModelBackend(ABC):
         Raises:
             ModelUnloadError: If model unloading fails.
         """
-        pass
 
     @abstractmethod
     async def get_available_memory(self) -> int:
@@ -53,7 +51,6 @@ class ModelBackend(ABC):
         Raises:
             BackendError: If memory information cannot be retrieved.
         """
-        pass
 
     @abstractmethod
     async def get_active_model(self) -> str | None:
@@ -65,4 +62,3 @@ class ModelBackend(ABC):
         Raises:
             BackendError: If active model information cannot be retrieved.
         """
-        pass
