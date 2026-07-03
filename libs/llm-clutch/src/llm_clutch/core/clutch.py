@@ -42,7 +42,7 @@ class ShiftResult:
     previous_model: str | None
     new_model: str | None
     error: str | None = None
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now())
 
 
 @dataclass
@@ -168,9 +168,10 @@ class LLMClutch:
             logger.info("disengage_skipped", reason="no_active_model")
             return
 
+        previous_model = self._active_model
         logger.info(
             "disengage_started",
-            active_model=self._active_model,
+            active_model=previous_model,
         )
 
         try:
@@ -178,14 +179,14 @@ class LLMClutch:
             self._active_model = None
             logger.info(
                 "disengage_success",
-                previous_model=self._active_model,
+                previous_model=previous_model,
             )
         except ModelUnloadError as e:
             error_msg = f"Failed to disengage: {str(e)}"
             logger.error(
                 "disengage_failed",
                 error=error_msg,
-                active_model=self._active_model,
+                active_model=previous_model,
                 exc_info=True,
             )
             raise
