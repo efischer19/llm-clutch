@@ -1,6 +1,6 @@
 ---
 title: "ADR-015: Use uv for Dependency Management"
-status: "Proposed"
+status: "Accepted"
 date: "2026-07-03"
 supersedes: "ADR-003"
 tags:
