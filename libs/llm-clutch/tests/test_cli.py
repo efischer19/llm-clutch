@@ -437,3 +437,252 @@ class TestClutchConfigOption:
         result = runner.invoke(clutch, ["check", "--help"])
         assert result.exit_code == 0
         assert "Run a topology health check" in result.output
+
+
+class TestClutchEmergencyResetCommand:
+    """Tests for the 'clutch emergency-reset' command."""
+
+    def test_emergency_reset_success_with_force(self) -> None:
+        """Test emergency reset command with --force flag."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_clutch = MagicMock()
+            mock_clutch.emergency_reset = AsyncMock()
+            mock_clutch.status.return_value = EngineStatus(
+                state=EngineState.ENGAGED,
+                active_model="llama-7b",
+                cluster_health=True,
+                last_shift_result=ShiftResult(
+                    success=True,
+                    previous_model="llama-70b",
+                    new_model="llama-7b",
+                ),
+            )
+            mock_create_clutch.return_value = mock_clutch
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--safe-model",
+                    "llama-7b",
+                    "--primary-node",
+                    "10.0.0.1",
+                    "--force",
+                ],
+            )
+
+            assert result.exit_code == 0
+            assert "✓ Emergency Reset Successful" in result.output
+            assert "llama-7b" in result.output
+            assert "10.0.0.1" in result.output
+            mock_clutch.emergency_reset.assert_called_once_with(
+                safe_model="llama-7b", primary_node="10.0.0.1"
+            )
+
+    def test_emergency_reset_success_json(self) -> None:
+        """Test emergency reset command with JSON output."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_clutch = MagicMock()
+            mock_clutch.emergency_reset = AsyncMock()
+            mock_clutch.status.return_value = EngineStatus(
+                state=EngineState.ENGAGED,
+                active_model="llama-7b",
+                cluster_health=True,
+                last_shift_result=ShiftResult(
+                    success=True,
+                    previous_model="llama-70b",
+                    new_model="llama-7b",
+                ),
+            )
+            mock_create_clutch.return_value = mock_clutch
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--safe-model",
+                    "llama-7b",
+                    "--primary-node",
+                    "10.0.0.1",
+                    "--force",
+                    "--json",
+                ],
+            )
+
+            assert result.exit_code == 0
+            output_json = json.loads(result.output)
+            assert output_json["success"] is True
+            assert output_json["safe_model"] == "llama-7b"
+            assert output_json["primary_node"] == "10.0.0.1"
+            assert output_json["active_model"] == "llama-7b"
+
+    def test_emergency_reset_missing_safe_model(self) -> None:
+        """Test emergency reset command without safe model."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_create_clutch.side_effect = ValueError("No safe model")
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--primary-node",
+                    "10.0.0.1",
+                    "--force",
+                ],
+            )
+
+            assert result.exit_code == 1
+            assert "Error:" in result.output
+
+    def test_emergency_reset_missing_primary_node(self) -> None:
+        """Test emergency reset command without primary node."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_create_clutch.side_effect = ValueError("No primary node")
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--safe-model",
+                    "llama-7b",
+                    "--force",
+                ],
+            )
+
+            assert result.exit_code == 1
+            assert "Error:" in result.output
+
+    def test_emergency_reset_primary_unreachable(self) -> None:
+        """Test emergency reset command when primary node is unreachable."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_clutch = MagicMock()
+            mock_clutch.emergency_reset = AsyncMock(
+                side_effect=OSError("Primary node unreachable")
+            )
+            mock_clutch.status.return_value = EngineStatus(
+                state=EngineState.IDLE,
+                active_model=None,
+                cluster_health=False,
+                last_shift_result=None,
+            )
+            mock_create_clutch.return_value = mock_clutch
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--safe-model",
+                    "llama-7b",
+                    "--primary-node",
+                    "10.0.0.1",
+                    "--force",
+                ],
+            )
+
+            assert result.exit_code == 1
+            assert "unreachable" in result.output or "Error:" in result.output
+
+    def test_emergency_reset_confirmation_prompt_yes(self) -> None:
+        """Test emergency reset confirmation prompt with yes response."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_clutch = MagicMock()
+            mock_clutch.emergency_reset = AsyncMock()
+            mock_clutch.status.return_value = EngineStatus(
+                state=EngineState.ENGAGED,
+                active_model="llama-70b",
+                cluster_health=True,
+                last_shift_result=None,
+            )
+            mock_create_clutch.return_value = mock_clutch
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--safe-model",
+                    "llama-7b",
+                    "--primary-node",
+                    "10.0.0.1",
+                ],
+                input="y\n",
+            )
+
+            assert result.exit_code == 0
+            assert "Emergency Reset Confirmation" in result.output
+            assert "Proceed with emergency reset?" in result.output
+            mock_clutch.emergency_reset.assert_called_once()
+
+    def test_emergency_reset_confirmation_prompt_no(self) -> None:
+        """Test emergency reset confirmation prompt with no response."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_clutch = MagicMock()
+            mock_clutch.emergency_reset = AsyncMock()
+            mock_clutch.status.return_value = EngineStatus(
+                state=EngineState.ENGAGED,
+                active_model="llama-70b",
+                cluster_health=True,
+                last_shift_result=None,
+            )
+            mock_create_clutch.return_value = mock_clutch
+
+            result = runner.invoke(
+                clutch,
+                [
+                    "emergency-reset",
+                    "--safe-model",
+                    "llama-7b",
+                    "--primary-node",
+                    "10.0.0.1",
+                ],
+                input="n\n",
+            )
+
+            assert result.exit_code == 0
+            assert "Reset cancelled." in result.output
+            mock_clutch.emergency_reset.assert_not_called()
+
+    def test_emergency_reset_loads_from_config(self) -> None:
+        """Test emergency reset loads safe_model from config."""
+        runner = CliRunner()
+
+        with patch("llm_clutch.cli._create_clutch") as mock_create_clutch:
+            mock_clutch = MagicMock()
+            mock_clutch.emergency_reset = AsyncMock()
+            mock_clutch.status.return_value = EngineStatus(
+                state=EngineState.IDLE,
+                active_model=None,
+                cluster_health=False,
+                last_shift_result=None,
+            )
+            mock_create_clutch.return_value = mock_clutch
+
+            with patch("llm_clutch.cli._load_config") as mock_load_config:
+                mock_load_config.return_value = {
+                    "node_ips": ["10.0.0.1"],
+                    "safe_model": "llama-7b",
+                    "primary_node": "10.0.0.1",
+                }
+
+                result = runner.invoke(
+                    clutch,
+                    ["emergency-reset", "--force"],
+                )
+
+                assert result.exit_code == 0
+                mock_clutch.emergency_reset.assert_called_once_with(
+                    safe_model="llama-7b", primary_node="10.0.0.1"
+                )

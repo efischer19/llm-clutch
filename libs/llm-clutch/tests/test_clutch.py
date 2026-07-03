@@ -521,3 +521,188 @@ class TestAtomicity:
             assert clutch._active_model == "llama-70b"
             assert backend.unload_model.call_count == 0
             assert backend.load_model.call_count == 0
+
+
+class TestEmergencyReset:
+    """Tests for emergency_reset method."""
+
+    @pytest.mark.asyncio
+    async def test_emergency_reset_success(self) -> None:
+        """Test successful emergency reset."""
+        backend = AsyncMock(spec=ModelBackend)
+        backend.unload_model = AsyncMock()
+        backend.load_model = AsyncMock()
+
+        infra_manager = InfraManager(["10.0.0.1", "10.0.0.2"])
+        from datetime import datetime
+
+        from llm_clutch.core.infra import NodeStatus
+
+        with patch.object(
+            infra_manager, "check_node", new_callable=AsyncMock
+        ) as mock_check:
+            mock_check.return_value = NodeStatus(
+                ip="10.0.0.1",
+                reachable=True,
+                latency_ms=10.5,
+                checked_at=datetime.now(),
+            )
+
+            clutch = LLMClutch(backend, infra_manager)
+            clutch._active_model = "llama-70b"
+
+            await clutch.emergency_reset(safe_model="llama-7b", primary_node="10.0.0.1")
+
+            assert clutch._active_model == "llama-7b"
+            assert clutch._state == EngineState.ENGAGED
+            assert clutch._last_shift_result is not None
+            assert clutch._last_shift_result.success is True
+            assert clutch._last_shift_result.previous_model == "llama-70b"
+            assert clutch._last_shift_result.new_model == "llama-7b"
+
+            backend.unload_model.assert_called_once()
+            backend.load_model.assert_called_once_with("llama-7b")
+            mock_check.assert_called_once_with("10.0.0.1")
+
+    @pytest.mark.asyncio
+    async def test_emergency_reset_when_cluster_in_error_state(self) -> None:
+        """Test emergency reset works when cluster is in error state."""
+        backend = AsyncMock(spec=ModelBackend)
+        backend.unload_model = AsyncMock()
+        backend.load_model = AsyncMock()
+
+        infra_manager = InfraManager(["10.0.0.1"])
+        from datetime import datetime
+
+        from llm_clutch.core.infra import NodeStatus
+
+        with patch.object(
+            infra_manager, "check_node", new_callable=AsyncMock
+        ) as mock_check:
+            mock_check.return_value = NodeStatus(
+                ip="10.0.0.1",
+                reachable=True,
+                latency_ms=10.5,
+                checked_at=datetime.now(),
+            )
+
+            clutch = LLMClutch(backend, infra_manager)
+            clutch._state = EngineState.ERROR
+            clutch._active_model = None
+
+            await clutch.emergency_reset(safe_model="llama-7b", primary_node="10.0.0.1")
+
+            assert clutch._active_model == "llama-7b"
+            assert clutch._state == EngineState.ENGAGED
+
+    @pytest.mark.asyncio
+    async def test_emergency_reset_primary_unreachable(self) -> None:
+        """Test emergency reset fails when primary node is unreachable."""
+        backend = AsyncMock(spec=ModelBackend)
+        backend.unload_model = AsyncMock()
+
+        infra_manager = InfraManager(["10.0.0.1"])
+        from datetime import datetime
+
+        from llm_clutch.core.infra import NodeStatus
+
+        with patch.object(
+            infra_manager, "check_node", new_callable=AsyncMock
+        ) as mock_check:
+            mock_check.return_value = NodeStatus(
+                ip="10.0.0.1",
+                reachable=False,
+                latency_ms=None,
+                checked_at=datetime.now(),
+            )
+
+            clutch = LLMClutch(backend, infra_manager)
+
+            with pytest.raises(OSError, match="unreachable"):
+                await clutch.emergency_reset(
+                    safe_model="llama-7b", primary_node="10.0.0.1"
+                )
+
+            assert clutch._state == EngineState.ERROR
+            backend.unload_model.assert_called_once()
+            backend.load_model.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_emergency_reset_unload_failure(self) -> None:
+        """Test emergency reset propagates unload failure."""
+        backend = AsyncMock(spec=ModelBackend)
+        backend.unload_model = AsyncMock(side_effect=ModelUnloadError("Unload failed"))
+
+        infra_manager = InfraManager(["10.0.0.1"])
+        clutch = LLMClutch(backend, infra_manager)
+        clutch._active_model = "llama-70b"
+
+        with pytest.raises(ModelUnloadError):
+            await clutch.emergency_reset(safe_model="llama-7b", primary_node="10.0.0.1")
+
+        assert clutch._state == EngineState.ERROR
+
+    @pytest.mark.asyncio
+    async def test_emergency_reset_load_failure(self) -> None:
+        """Test emergency reset propagates load failure."""
+        backend = AsyncMock(spec=ModelBackend)
+        backend.unload_model = AsyncMock()
+        backend.load_model = AsyncMock(side_effect=ModelLoadError("Load failed"))
+
+        infra_manager = InfraManager(["10.0.0.1"])
+        from datetime import datetime
+
+        from llm_clutch.core.infra import NodeStatus
+
+        with patch.object(
+            infra_manager, "check_node", new_callable=AsyncMock
+        ) as mock_check:
+            mock_check.return_value = NodeStatus(
+                ip="10.0.0.1",
+                reachable=True,
+                latency_ms=10.5,
+                checked_at=datetime.now(),
+            )
+
+            clutch = LLMClutch(backend, infra_manager)
+            clutch._active_model = "llama-70b"
+
+            with pytest.raises(ModelLoadError):
+                await clutch.emergency_reset(
+                    safe_model="llama-7b", primary_node="10.0.0.1"
+                )
+
+            assert clutch._state == EngineState.ERROR
+            assert clutch._active_model is None
+
+    @pytest.mark.asyncio
+    async def test_emergency_reset_no_active_model(self) -> None:
+        """Test emergency reset works when no model is currently active."""
+        backend = AsyncMock(spec=ModelBackend)
+        backend.unload_model = AsyncMock()
+        backend.load_model = AsyncMock()
+
+        infra_manager = InfraManager(["10.0.0.1"])
+        from datetime import datetime
+
+        from llm_clutch.core.infra import NodeStatus
+
+        with patch.object(
+            infra_manager, "check_node", new_callable=AsyncMock
+        ) as mock_check:
+            mock_check.return_value = NodeStatus(
+                ip="10.0.0.1",
+                reachable=True,
+                latency_ms=10.5,
+                checked_at=datetime.now(),
+            )
+
+            clutch = LLMClutch(backend, infra_manager)
+            assert clutch._active_model is None
+
+            await clutch.emergency_reset(safe_model="llama-7b", primary_node="10.0.0.1")
+
+            assert clutch._active_model == "llama-7b"
+            assert clutch._state == EngineState.ENGAGED
+            backend.unload_model.assert_called_once()
+            backend.load_model.assert_called_once_with("llama-7b")
