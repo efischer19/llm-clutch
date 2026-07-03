@@ -5,13 +5,13 @@ This directory contains shared libraries for **{{PROJECT_NAME}}**.
 ## Structure
 
 Each subdirectory represents a reusable Python library with its own
-Poetry-managed dependencies:
+uv-managed dependencies:
 
 ```text
 libs/
 ├── {{LIB_NAME}}/
 │   ├── README.md          # Library-specific documentation
-│   ├── pyproject.toml     # Poetry project configuration
+│   ├── pyproject.toml     # uv project configuration
 │   ├── src/
 │   │   └── {{LIB_NAME}}/ # Library source code
 │   └── tests/             # Library tests
@@ -25,7 +25,7 @@ libs/
 * Every library must have a `README.md` documenting its public API, usage
   examples, and any dependencies
 * Libraries should be independently testable
-* Use [Poetry](../meta/adr/ADR-003-use_poetry.md) for dependency management
+* Use [uv](../meta/adr/ADR-015-use_uv.md) for dependency management
 * Use [Ruff](../meta/adr/ADR-005-use_ruff.md) for linting and formatting
 * Use [pytest](../meta/adr/ADR-004-use_pytest.md) for testing
 * Follow the [Development Philosophy](../meta/DEVELOPMENT_PHILOSOPHY.md) for
