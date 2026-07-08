@@ -136,9 +136,7 @@ def status(ctx: click.Context, output_json: bool) -> None:
             # Human-readable format
             click.echo(f"Engine State: {engine_status.state.value}")
             click.echo(f"Active Model: {engine_status.active_model or 'None'}")
-            health_status = (
-                "Healthy" if engine_status.cluster_health else "Unhealthy"
-            )
+            health_status = "Healthy" if engine_status.cluster_health else "Unhealthy"
             click.echo(f"Cluster Health: {health_status}")
 
             if engine_status.last_shift_result:
@@ -350,6 +348,170 @@ def check(ctx: click.Context, output_json: bool) -> None:
     except Exception as e:
         click.echo(f"Check failed: {e}", err=True)
         logger.error("check_error", error=str(e), exc_info=True)
+        raise SystemExit(1) from None
+
+
+@clutch.command()
+@click.option(
+    "--safe-model",
+    help=(
+        "Name of the safe model to load (e.g., llama-7b). "
+        "Can be configured in config file."
+    ),
+)
+@click.option(
+    "--primary-node",
+    help=(
+        "IP address of the primary node to target (e.g., 10.0.0.1). "
+        "Can be configured in config file."
+    ),
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Skip confirmation prompt and proceed with reset.",
+)
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    help="Output as JSON for machine parsing.",
+)
+@click.pass_context
+def emergency_reset(
+    ctx: click.Context,
+    safe_model: str | None,
+    primary_node: str | None,
+    force: bool,
+    output_json: bool,
+) -> None:
+    """Perform an emergency reset to restore cluster to a known working state.
+
+    This is the "break glass in case of emergency" feature that restores the
+    local cluster to a known working state (typically a single-node configuration
+    with a lightweight model) without requiring external agents to be functional.
+
+    The reset sequence:
+    - Force-unload any active model
+    - Verify primary node is reachable
+    - Load the safe model on primary node only
+
+    Defaults for safe_model and primary_node can be configured in the config file
+    under the [tool.llm-clutch] section.
+    """
+    try:
+        config = ctx.obj["config"]
+        clutch_engine = _create_clutch(config)
+
+        # Get safe_model from CLI arg or config file
+        if not safe_model:
+            safe_model = config.get("safe_model")
+        if not safe_model:
+            error_msg = (
+                "Safe model not specified. Use --safe-model or configure "
+                "in config file."
+            )
+            raise ValueError(error_msg)
+
+        # Get primary_node from CLI arg or config file
+        if not primary_node:
+            primary_node = config.get("primary_node")
+        if not primary_node:
+            # If not configured, use the first node IP
+            node_ips = config.get("node_ips", [])
+            if node_ips:
+                primary_node = node_ips[0]
+
+        if not primary_node:
+            error_msg = (
+                "Primary node not specified. Use --primary-node or configure "
+                "in config file."
+            )
+            raise ValueError(error_msg)
+
+        # Get current status for confirmation prompt
+        current_status = clutch_engine.status()
+
+        # Display current state and ask for confirmation (unless --force)
+        if not force:
+            click.echo("\n" + "=" * 70)
+            click.echo("Emergency Reset Confirmation")
+            click.echo("=" * 70)
+            click.echo(f"Current State: {current_status.state.value}")
+            current_model = current_status.active_model or "None"
+            click.echo(f"Active Model: {current_model}")
+            health_status = "Healthy" if current_status.cluster_health else "Unhealthy"
+            click.echo(f"Cluster Health: {health_status}")
+            click.echo()
+            click.echo("This operation will:")
+            click.echo(f"  1. Force-unload current model: {current_model}")
+            click.echo(
+                f"  2. Load safe model on primary node: {safe_model} on {primary_node}"
+            )
+            click.echo("  3. Leave all other nodes idle")
+            click.echo()
+            click.echo("Warning: This bypasses multi-node cluster checks.")
+            click.echo("=" * 70)
+
+            # Ask for confirmation
+            if not click.confirm("Proceed with emergency reset?"):
+                click.echo("Reset cancelled.")
+                raise SystemExit(0)
+
+        # Run the async emergency_reset operation
+        asyncio.run(
+            clutch_engine.emergency_reset(
+                safe_model=safe_model, primary_node=primary_node
+            )
+        )
+
+        # Get updated status
+        engine_status = clutch_engine.status()
+
+        if output_json:
+            result = engine_status.last_shift_result
+            output_data = {
+                "success": result.success if result else False,
+                "safe_model": safe_model,
+                "primary_node": primary_node,
+                "active_model": engine_status.active_model,
+                "error": result.error if result else None,
+            }
+            click.echo(json.dumps(output_data, indent=2))
+        else:
+            click.echo("\n" + "=" * 70)
+            click.echo("✓ Emergency Reset Successful")
+            click.echo("=" * 70)
+            click.echo(f"Safe model loaded: {safe_model}")
+            click.echo(f"Primary node: {primary_node}")
+            click.echo(f"Active model: {engine_status.active_model}")
+            click.echo("=" * 70 + "\n")
+
+    except ValueError as e:
+        if output_json:
+            click.echo(json.dumps({"success": False, "error": str(e)}, indent=2))
+        else:
+            click.echo(f"Error: {e}", err=True)
+        logger.error("emergency_reset_value_error", error=str(e))
+        raise SystemExit(1) from None
+    except OSError as e:
+        if output_json:
+            click.echo(
+                json.dumps(
+                    {"success": False, "error": f"Primary node unreachable: {e}"},
+                    indent=2,
+                )
+            )
+        else:
+            click.echo(f"Error: Primary node unreachable: {e}", err=True)
+        logger.error("emergency_reset_node_error", error=str(e), exc_info=True)
+        raise SystemExit(1) from None
+    except Exception as e:
+        if output_json:
+            click.echo(json.dumps({"success": False, "error": str(e)}, indent=2))
+        else:
+            click.echo(f"Emergency reset failed: {e}", err=True)
+        logger.error("emergency_reset_error", error=str(e), exc_info=True)
         raise SystemExit(1) from None
 
 

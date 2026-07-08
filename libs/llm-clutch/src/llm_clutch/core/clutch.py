@@ -412,6 +412,130 @@ class LLMClutch:
             )
             raise
 
+    async def emergency_reset(self, safe_model: str, primary_node: str) -> None:
+        """Perform an emergency reset to load a safe model on primary node only.
+
+        This is the "break glass in case of emergency" operation that bypasses
+        multi-node topology checks and rev_match validation. It restores the
+        cluster to a known working state (typically a single-node configuration
+        with a lightweight model).
+
+        The reset sequence:
+        1. Force-unload any active model (even if errors occur)
+        2. Verify the primary node is reachable
+        3. Load the safe model on the primary node only
+        4. Update engine state to ENGAGED
+
+        This operation works even when the cluster is in an ERROR state and
+        does not depend on multi-node health checks succeeding.
+
+        Args:
+            safe_model: Name of the safe model to load (typically lightweight).
+            primary_node: IP address of the primary node.
+
+        Raises:
+            ModelUnloadError: If force-unload fails.
+            OSError: If primary node is unreachable.
+            ModelLoadError: If loading the safe model fails.
+        """
+        previous_model = self._active_model
+        logger.info(
+            "emergency_reset_started",
+            safe_model=safe_model,
+            primary_node=primary_node,
+            previous_model=previous_model,
+            current_state=self._state.value,
+        )
+
+        self._state = EngineState.SHIFTING
+
+        try:
+            # Step 1: Force-unload any active model
+            logger.info(
+                "emergency_reset_force_unload",
+                active_model=previous_model,
+            )
+            try:
+                await self.backend.unload_model()
+            except ModelUnloadError as e:
+                logger.error(
+                    "emergency_reset_unload_failed",
+                    error=str(e),
+                    exc_info=True,
+                )
+                raise
+
+            self._active_model = None
+
+            # Step 2: Verify primary node is reachable
+            logger.info(
+                "emergency_reset_check_primary_node",
+                primary_node=primary_node,
+            )
+            node_status = await self.infra_manager.check_node(primary_node)
+            if not node_status.reachable:
+                error_msg = f"Primary node {primary_node} is unreachable"
+                logger.error(
+                    "emergency_reset_primary_unreachable",
+                    primary_node=primary_node,
+                )
+                raise OSError(error_msg)
+
+            logger.info(
+                "emergency_reset_primary_reachable",
+                primary_node=primary_node,
+                latency_ms=node_status.latency_ms,
+            )
+
+            # Step 3: Load the safe model on primary node
+            logger.info(
+                "emergency_reset_load_model",
+                safe_model=safe_model,
+                primary_node=primary_node,
+            )
+            try:
+                await self.backend.load_model(safe_model)
+            except ModelLoadError as e:
+                logger.error(
+                    "emergency_reset_load_failed",
+                    safe_model=safe_model,
+                    error=str(e),
+                    exc_info=True,
+                )
+                raise
+
+            self._active_model = safe_model
+            self._state = EngineState.ENGAGED
+
+            logger.info(
+                "emergency_reset_success",
+                safe_model=safe_model,
+                primary_node=primary_node,
+                previous_model=previous_model,
+            )
+            self._last_shift_result = ShiftResult(
+                success=True,
+                previous_model=previous_model,
+                new_model=safe_model,
+            )
+
+        except Exception as e:
+            logger.error(
+                "emergency_reset_failed",
+                safe_model=safe_model,
+                primary_node=primary_node,
+                error=str(e),
+                exc_info=True,
+            )
+            self._state = EngineState.ERROR
+            self._last_shift_result = ShiftResult(
+                success=False,
+                previous_model=previous_model,
+                new_model=safe_model,
+                error=str(e),
+            )
+            raise
+
     def status(self) -> EngineStatus:
         """Return the current state of the clutch engine.
 
