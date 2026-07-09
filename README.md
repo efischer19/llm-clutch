@@ -1,7 +1,13 @@
 # python-project-blueprint
 
-> A template for Python monorepo projects targeting Python 3.12+ with Poetry
+> A template for Python monorepo projects targeting Python 3.12+ with uv
 > dependency management.
+
+<!-- CI status badges for the llm-clutch project -->
+<!-- When using this template, update the repository name in the URLs below -->
+![CI](https://github.com/efischer19/llm-clutch/actions/workflows/ci.yml/badge.svg)
+![Publish](https://github.com/efischer19/llm-clutch/actions/workflows/publish.yml/badge.svg)
+![Documentation](https://github.com/efischer19/llm-clutch/actions/workflows/documentation.yml/badge.svg)
 
 ## What Is This?
 
@@ -44,7 +50,7 @@ For more details on GitHub template repositories, see the
 | ADR | Decision |
 | :--- | :--- |
 | [ADR-002](meta/adr/ADR-002-use_python312.md) | Python 3.12+ as minimum version |
-| [ADR-003](meta/adr/ADR-003-use_poetry.md) | Poetry for dependency management |
+| [ADR-015](meta/adr/ADR-015-use_uv.md) | uv for dependency management |
 | [ADR-004](meta/adr/ADR-004-use_pytest.md) | pytest for testing |
 | [ADR-005](meta/adr/ADR-005-use_ruff.md) | Ruff for linting and formatting |
 | [ADR-006](meta/adr/ADR-006-use_docker.md) | Docker for containerization |
@@ -83,8 +89,8 @@ values appropriate for your project:
 pyenv install 3.12
 pyenv local 3.12
 
-# Install Poetry
-curl -sSL https://install.python-poetry.org | python3 -
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install pre-commit hooks
 pip install pre-commit
@@ -103,8 +109,8 @@ pip install -r docs-requirements.txt
 ```bash
 mkdir -p apps/my-app
 cd apps/my-app
-poetry init
-mkdir -p src/my_app tests
+uv init --package
+mkdir -p tests
 ```
 
 ### 4. Verify CI
@@ -116,8 +122,8 @@ passes in your new repository.
 
 * **Python 3.12+ only.** Take advantage of modern Python features and
   performance improvements.
-* **Poetry everywhere.** Consistent dependency management across all apps
-  and libraries.
+* **uv everywhere.** Consistent dependency management across all apps
+  and libraries with dramatically faster dependency resolution.
 * **Ruff for speed.** Fast linting and formatting that replaces multiple
   tools.
 * **Documentation-first.** Every significant decision is captured in an ADR.

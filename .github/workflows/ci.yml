@@ -102,26 +102,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - apps/example-app
-          - libs/example-lib
+        include:
+          - project: apps/example-app
+            setup-action: setup-python-poetry
+            run-prefix: poetry run
+          - project: libs/example-lib
+            setup-action: setup-python-poetry
+            run-prefix: poetry run
+          - project: libs/llm-clutch
+            setup-action: setup-python-uv
+            run-prefix: uv run
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Set up Python and Poetry
-        uses: ./.github/actions/setup-python-poetry
+      - name: Set up Python and dependency manager
+        uses: ./.github/actions/${{ matrix.setup-action }}
         with:
           working-directory: ${{ matrix.project }}
 
       - name: Ruff format check
         working-directory: ${{ matrix.project }}
-        run: poetry run ruff format --check .
+        run: ${{ matrix.run-prefix }} ruff format --check .
 
       - name: Ruff lint
         working-directory: ${{ matrix.project }}
-        run: poetry run ruff check .
+        run: ${{ matrix.run-prefix }} ruff check .
 
       - name: pytest
         working-directory: ${{ matrix.project }}
-        run: poetry run pytest
+        run: ${{ matrix.run-prefix }} pytest

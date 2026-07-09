@@ -24,3 +24,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+
+  # Monitor pip dependencies for llm-clutch
+  - package-ecosystem: "pip"
+    directory: "/libs/llm-clutch"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+

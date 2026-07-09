@@ -11,36 +11,40 @@ permissions:
 
 jobs:
   publish:
-    name: Publish to PyPI
+    name: Publish llm-clutch to PyPI
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/example-app
+        working-directory: libs/llm-clutch
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Set up Python and Poetry
-        uses: ./.github/actions/setup-python-poetry
+      - name: Set up Python and uv
+        uses: ./.github/actions/setup-python-uv
         with:
-          working-directory: apps/example-app
+          working-directory: libs/llm-clutch
 
       - name: Build package
-        run: poetry build
+        run: uv build
 
       - name: Verify build artifacts
         run: ls -lh dist/
 
       # Uncomment the following to enable PyPI publishing:
       # - name: Publish to PyPI
-      #   run: poetry publish --build
+      #   run: uv publish
       #   env:
-      #     POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+      #     UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
       #
       # Prerequisites for publishing:
-      #   1. Add PYPI_TOKEN to your repository secrets
+      #   1. Create a PyPI account at https://pypi.org
+      #   2. Generate an API token (scoped to this package if possible)
+      #   3. Add PYPI_TOKEN to your repository secrets
       #      (Settings → Secrets and variables → Actions → New repository secret)
-      #   2. Create an account on https://pypi.org and generate an API token
-      #   3. Uncomment the "Publish to PyPI" step above
-      #   4. Remove the "Verify build artifacts" step if desired
+      #   4. Uncomment the "Publish to PyPI" step above
+      #   5. The GitHub secret PYPI_TOKEN will be exposed as UV_PUBLISH_TOKEN
+      #      See uv publishing docs: https://docs.astral.sh/uv/guides/publish/
+      #   6. Remove the "Verify build artifacts" step if desired
+
