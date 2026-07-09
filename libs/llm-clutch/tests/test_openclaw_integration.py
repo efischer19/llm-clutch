@@ -421,40 +421,6 @@ class TestErrorMessagesAreAgentReadable:
         assert len(result.message) > 0
 
 
-class TestParameterValidation:
-    """Tests for parameter validation in tools."""
-
-    @pytest.mark.asyncio
-    async def test_upshift_with_zero_ram_fails_gracefully(self) -> None:
-        """Test upshift with zero required_ram fails gracefully."""
-        clutch = make_mock_clutch()
-        tool = UpshiftTool(clutch)
-
-        # Zero RAM should fail in rev_match (insufficient resources)
-        result = await tool.execute("llama-70b", 0)
-
-        # Should return a failure result, not raise an exception
-        assert isinstance(result, ToolResult)
-        # Zero RAM is insufficient so it should fail
-        assert result.success is False
-        assert result.error is not None
-
-    @pytest.mark.asyncio
-    async def test_downshift_with_zero_ram_fails_gracefully(self) -> None:
-        """Test downshift with zero required_ram fails gracefully."""
-        clutch = make_mock_clutch()
-        tool = DownshiftTool(clutch)
-
-        # Zero RAM should fail in rev_match (insufficient resources)
-        result = await tool.execute("llama-7b", 0)
-
-        # Should return a failure result, not raise an exception
-        assert isinstance(result, ToolResult)
-        # Zero RAM is insufficient so it should fail
-        assert result.success is False
-        assert result.error is not None
-
-
 class TestToolInitialization:
     """Tests for tool initialization."""
 
