@@ -390,9 +390,7 @@ class TestErrorMessagesAreAgentReadable:
         # Message should explain the problem and suggest action
         assert len(result.error) > 0
         error_lower = result.error.lower()
-        assert (
-            "insufficient resources" in error_lower or "failed" in error_lower
-        )
+        assert "insufficient resources" in error_lower or "failed" in error_lower
 
     @pytest.mark.asyncio
     async def test_downshift_error_message_is_readable(self) -> None:
