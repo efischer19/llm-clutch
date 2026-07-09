@@ -433,14 +433,10 @@ def get_openclaw_tools(clutch: LLMClutch) -> list[dict[str, Any]]:
         tools = get_openclaw_tools(clutch)
         agent = OpenClawAgent(tools=tools)
     """
-    upshift = UpshiftTool(clutch)
-    downshift = DownshiftTool(clutch)
-    status = StatusTool(clutch)
-
     return [
-        upshift.tool_schema(),
-        downshift.tool_schema(),
-        status.tool_schema(),
+        UpshiftTool.tool_schema(),
+        DownshiftTool.tool_schema(),
+        StatusTool.tool_schema(),
     ]
 
 
@@ -463,10 +459,14 @@ def get_tool_executor(
         executor = get_tool_executor(clutch, 'upshift')
         result = await executor.execute(model_name='llama-70b', required_ram=500000)
     """
-    if tool_name == "upshift":
-        return UpshiftTool(clutch)
-    elif tool_name == "downshift":
-        return DownshiftTool(clutch)
-    elif tool_name == "status":
-        return StatusTool(clutch)
-    return None
+    tool_classes: dict[str, type] = {
+        "upshift": UpshiftTool,
+        "downshift": DownshiftTool,
+        "status": StatusTool,
+    }
+
+    tool_class = tool_classes.get(tool_name)
+    if tool_class is None:
+        return None
+
+    return tool_class(clutch)
