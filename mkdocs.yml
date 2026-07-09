@@ -19,6 +19,17 @@ plugins:
 
 nav:
   - Home: index.md
+  - llm-clutch:
+      - Overview: https://github.com/efischer19/llm-clutch/tree/main/libs/llm-clutch#readme
+      - Quick Start: https://github.com/efischer19/llm-clutch/tree/main/libs/llm-clutch#quick-start
+      - Hardware Guide: HARDWARE_GUIDE.md
+      - CLI Reference: cli.md
+      - API Reference:
+          - Overview: api/index.md
+          - LLMClutch: api/clutch.md
+          - Backends: api/backend.md
+          - Infrastructure Manager: api/infra.md
+      - Configuration: config.md
   - Development:
       - Contributing: CONTRIBUTING.md
       - Development Philosophy: DEVELOPMENT_PHILOSOPHY.md
