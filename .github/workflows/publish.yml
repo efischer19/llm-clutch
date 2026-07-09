@@ -39,9 +39,12 @@ jobs:
       #     UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
       #
       # Prerequisites for publishing:
-      #   1. Add PYPI_TOKEN to your repository secrets
+      #   1. Create a PyPI account at https://pypi.org
+      #   2. Generate an API token (scoped to this package if possible)
+      #   3. Add PYPI_TOKEN to your repository secrets
       #      (Settings → Secrets and variables → Actions → New repository secret)
-      #   2. Create an account on https://pypi.org and generate an API token
-      #   3. Uncomment the "Publish to PyPI" step above
-      #   4. Remove the "Verify build artifacts" step if desired
+      #   4. Uncomment the "Publish to PyPI" step above
+      #   5. The GitHub secret PYPI_TOKEN will be exposed as UV_PUBLISH_TOKEN
+      #      (verify this matches uv's current environment variable expectations)
+      #   6. Remove the "Verify build artifacts" step if desired
 
