@@ -313,16 +313,14 @@ class TestGetOpenclawTools:
 
     def test_get_openclaw_tools_returns_list_of_schemas(self) -> None:
         """Test that get_openclaw_tools returns a list of tool schemas."""
-        clutch = make_mock_clutch()
-        tools = get_openclaw_tools(clutch)
+        tools = get_openclaw_tools()
 
         assert isinstance(tools, list)
         assert len(tools) == 3
 
     def test_get_openclaw_tools_includes_all_tools(self) -> None:
         """Test that get_openclaw_tools includes all three tools."""
-        clutch = make_mock_clutch()
-        tools = get_openclaw_tools(clutch)
+        tools = get_openclaw_tools()
 
         tool_names = [tool["function"]["name"] for tool in tools]
         assert "upshift" in tool_names
@@ -331,8 +329,7 @@ class TestGetOpenclawTools:
 
     def test_get_openclaw_tools_returns_valid_schemas(self) -> None:
         """Test that all returned tools are valid schemas."""
-        clutch = make_mock_clutch()
-        tools = get_openclaw_tools(clutch)
+        tools = get_openclaw_tools()
 
         for tool in tools:
             assert tool["type"] == "function"

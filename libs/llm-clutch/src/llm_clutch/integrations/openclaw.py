@@ -422,14 +422,11 @@ _TOOL_REGISTRY: dict[str, type[UpshiftTool | DownshiftTool | StatusTool]] = {
 }
 
 
-def get_openclaw_tools(clutch: LLMClutch) -> list[dict[str, Any]]:
+def get_openclaw_tools() -> list[dict[str, Any]]:
     """Get a list of all OpenClaw tool definitions ready for injection.
 
     This convenience function returns all tool definitions in a format
     that can be directly passed to an OpenClaw agent configuration.
-
-    Args:
-        clutch: The LLMClutch instance to use for all operations.
 
     Returns:
         A list of tool schema dictionaries compatible with OpenClaw.
@@ -437,8 +434,7 @@ def get_openclaw_tools(clutch: LLMClutch) -> list[dict[str, Any]]:
         for agent-readable tool invocation.
 
     Example:
-        clutch = LLMClutch(backend=exo_backend, infra_manager=infra_mgr)
-        tools = get_openclaw_tools(clutch)
+        tools = get_openclaw_tools()
         agent = OpenClawAgent(tools=tools)
     """
     return [
