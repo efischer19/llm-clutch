@@ -5,7 +5,9 @@ injected into an OpenClaw agent as executable tools. The tools enable the
 agent to self-escalate by detecting complex tasks and autonomously swapping
 to a heavier reasoning model, then downshifting when the task is complete.
 
-TODO: Verify against OpenClaw tool spec
+Note: These tool schemas follow a provisional JSON schema format. The exact
+OpenClaw tool specification may change; when finalized, verify schema
+compatibility and update if necessary.
 """
 
 from dataclasses import dataclass
@@ -59,8 +61,6 @@ class UpshiftTool:
         Returns:
             A JSON schema definition describing the tool's parameters
             and expected behavior.
-
-        TODO: Verify against OpenClaw tool spec
         """
         return {
             "type": "function",
@@ -119,19 +119,14 @@ class UpshiftTool:
             and an agent-readable message.
         """
         try:
+            # Log with optional reason parameter
+            log_kwargs = {
+                "model_name": model_name,
+                "required_ram": required_ram,
+            }
             if reason:
-                logger.info(
-                    "upshift_initiated_by_agent",
-                    model_name=model_name,
-                    required_ram=required_ram,
-                    reason=reason,
-                )
-            else:
-                logger.info(
-                    "upshift_initiated_by_agent",
-                    model_name=model_name,
-                    required_ram=required_ram,
-                )
+                log_kwargs["reason"] = reason
+            logger.info("upshift_initiated_by_agent", **log_kwargs)
 
             await self.clutch.upshift(model_name, required_ram)
 
@@ -213,8 +208,6 @@ class DownshiftTool:
         Returns:
             A JSON schema definition describing the tool's parameters
             and expected behavior.
-
-        TODO: Verify against OpenClaw tool spec
         """
         return {
             "type": "function",
@@ -274,19 +267,14 @@ class DownshiftTool:
             and an agent-readable message.
         """
         try:
+            # Log with optional reason parameter
+            log_kwargs = {
+                "model_name": model_name,
+                "required_ram": required_ram,
+            }
             if reason:
-                logger.info(
-                    "downshift_initiated_by_agent",
-                    model_name=model_name,
-                    required_ram=required_ram,
-                    reason=reason,
-                )
-            else:
-                logger.info(
-                    "downshift_initiated_by_agent",
-                    model_name=model_name,
-                    required_ram=required_ram,
-                )
+                log_kwargs["reason"] = reason
+            logger.info("downshift_initiated_by_agent", **log_kwargs)
 
             await self.clutch.downshift(model_name, required_ram)
 
@@ -368,8 +356,6 @@ class StatusTool:
         Returns:
             A JSON schema definition describing the tool's parameters
             and expected behavior.
-
-        TODO: Verify against OpenClaw tool spec
         """
         return {
             "type": "function",

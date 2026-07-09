@@ -425,25 +425,34 @@ class TestParameterValidation:
     """Tests for parameter validation in tools."""
 
     @pytest.mark.asyncio
-    async def test_upshift_validates_required_ram_is_positive(self) -> None:
-        """Test upshift should handle zero or negative RAM gracefully."""
+    async def test_upshift_with_zero_ram_fails_gracefully(self) -> None:
+        """Test upshift with zero required_ram fails gracefully."""
         clutch = make_mock_clutch()
         tool = UpshiftTool(clutch)
 
-        # Zero RAM should fail at schema level or in rev_match
+        # Zero RAM should fail in rev_match (insufficient resources)
         result = await tool.execute("llama-70b", 0)
-        # Either validation catches it or rev_match does
-        assert result.success is False or result.active_model is not None
+
+        # Should return a failure result, not raise an exception
+        assert isinstance(result, ToolResult)
+        # Zero RAM is insufficient so it should fail
+        assert result.success is False
+        assert result.error is not None
 
     @pytest.mark.asyncio
-    async def test_downshift_validates_required_ram_is_positive(self) -> None:
-        """Test downshift should handle zero or negative RAM gracefully."""
+    async def test_downshift_with_zero_ram_fails_gracefully(self) -> None:
+        """Test downshift with zero required_ram fails gracefully."""
         clutch = make_mock_clutch()
         tool = DownshiftTool(clutch)
 
+        # Zero RAM should fail in rev_match (insufficient resources)
         result = await tool.execute("llama-7b", 0)
-        # Either validation catches it or rev_match does
-        assert result.success is False or result.active_model is not None
+
+        # Should return a failure result, not raise an exception
+        assert isinstance(result, ToolResult)
+        # Zero RAM is insufficient so it should fail
+        assert result.success is False
+        assert result.error is not None
 
 
 class TestToolInitialization:
