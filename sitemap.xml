@@ -17,6 +17,10 @@
          <lastmod>2026-07-09</lastmod>
     </url>
     <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/HARDWARE_GUIDE/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
          <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/LOCAL_DEVELOPMENT_DEPENDENCIES/</loc>
          <lastmod>2026-07-09</lastmod>
     </url>
@@ -25,7 +29,31 @@
          <lastmod>2026-07-09</lastmod>
     </url>
     <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/cli/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/config/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
          <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/feature-request-automation/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/api/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/api/backend/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/api/clutch/</loc>
+         <lastmod>2026-07-09</lastmod>
+    </url>
+    <url>
+         <loc>https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/api/infra/</loc>
          <lastmod>2026-07-09</lastmod>
     </url>
 </urlset>
