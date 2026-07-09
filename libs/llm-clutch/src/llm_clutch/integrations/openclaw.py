@@ -414,6 +414,14 @@ class StatusTool:
             )
 
 
+# Tool registry mapping tool names to their classes
+_TOOL_REGISTRY: dict[str, type[UpshiftTool | DownshiftTool | StatusTool]] = {
+    "upshift": UpshiftTool,
+    "downshift": DownshiftTool,
+    "status": StatusTool,
+}
+
+
 def get_openclaw_tools(clutch: LLMClutch) -> list[dict[str, Any]]:
     """Get a list of all OpenClaw tool definitions ready for injection.
 
@@ -459,13 +467,7 @@ def get_tool_executor(
         executor = get_tool_executor(clutch, 'upshift')
         result = await executor.execute(model_name='llama-70b', required_ram=500000)
     """
-    tool_classes: dict[str, type] = {
-        "upshift": UpshiftTool,
-        "downshift": DownshiftTool,
-        "status": StatusTool,
-    }
-
-    tool_class = tool_classes.get(tool_name)
+    tool_class = _TOOL_REGISTRY.get(tool_name)
     if tool_class is None:
         return None
 
