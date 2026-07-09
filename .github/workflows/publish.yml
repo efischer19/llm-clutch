@@ -45,6 +45,6 @@ jobs:
       #      (Settings → Secrets and variables → Actions → New repository secret)
       #   4. Uncomment the "Publish to PyPI" step above
       #   5. The GitHub secret PYPI_TOKEN will be exposed as UV_PUBLISH_TOKEN
-      #      (verify this matches uv's current environment variable expectations)
+      #      See uv publishing docs: https://docs.astral.sh/uv/guides/publish/
       #   6. Remove the "Verify build artifacts" step if desired
 

@@ -3,6 +3,8 @@
 > A template for Python monorepo projects targeting Python 3.12+ with uv
 > dependency management.
 
+<!-- CI status badges for the llm-clutch project -->
+<!-- When using this template, update the repository name in the URLs below -->
 ![CI](https://github.com/efischer19/llm-clutch/actions/workflows/ci.yml/badge.svg)
 ![Publish](https://github.com/efischer19/llm-clutch/actions/workflows/publish.yml/badge.svg)
 ![Documentation](https://github.com/efischer19/llm-clutch/actions/workflows/documentation.yml/badge.svg)
