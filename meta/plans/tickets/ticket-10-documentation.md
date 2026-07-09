@@ -13,7 +13,7 @@ ADR-012) for publishing to GitHub Pages.
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/README.md` is updated with: project overview, quick-start installation (`pip install llm-clutch`), basic usage examples (Python API and CLI), link to full docs
+- [ ] `README.md` is updated with: project overview, quick-start installation (`pip install llm-clutch`), basic usage examples (Python API and CLI), link to full docs
 - [ ] A `HARDWARE_GUIDE.md` exists in `docs-src/` covering the Thunderbolt/NFS setup, adapted from the existing seed hardware guide in `meta/plans/seed_docs/`
 - [ ] The hardware guide clearly states this setup is recommended but not required for the package to function
 - [ ] API reference docs exist for all public classes: `LLMClutch`, `ModelBackend`, `ExoBackend`, `InfraManager`

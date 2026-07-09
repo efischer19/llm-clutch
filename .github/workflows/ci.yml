@@ -97,38 +97,22 @@ jobs:
             **/*.md
 
   python-checks:
-    name: Python Checks (${{ matrix.project }})
+    name: Python Checks
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - project: apps/example-app
-            setup-action: setup-python-poetry
-            run-prefix: poetry run
-          - project: libs/example-lib
-            setup-action: setup-python-poetry
-            run-prefix: poetry run
-          - project: libs/llm-clutch
-            setup-action: setup-python-uv
-            run-prefix: uv run
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
 
       - name: Set up Python and dependency manager
-        uses: ./.github/actions/${{ matrix.setup-action }}
+        uses: ./.github/actions/setup-python-uv
         with:
-          working-directory: ${{ matrix.project }}
+          working-directory: .
 
       - name: Ruff format check
-        working-directory: ${{ matrix.project }}
-        run: ${{ matrix.run-prefix }} ruff format --check .
+        run: uv run ruff format --check .
 
       - name: Ruff lint
-        working-directory: ${{ matrix.project }}
-        run: ${{ matrix.run-prefix }} ruff check .
+        run: uv run ruff check .
 
       - name: pytest
-        working-directory: ${{ matrix.project }}
-        run: ${{ matrix.run-prefix }} pytest
+        run: uv run pytest

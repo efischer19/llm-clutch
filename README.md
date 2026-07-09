@@ -1,135 +1,175 @@
-# python-project-blueprint
+# llm-clutch
 
-> A template for Python monorepo projects targeting Python 3.12+ with uv
-> dependency management.
+A hardware-aware, local LLM orchestration package that safely hot-swaps massive neural networks in memory across a local cluster.
 
-<!-- CI status badges for the llm-clutch project -->
-<!-- When using this template, update the repository name in the URLs below -->
-![CI](https://github.com/efischer19/llm-clutch/actions/workflows/ci.yml/badge.svg)
-![Publish](https://github.com/efischer19/llm-clutch/actions/workflows/publish.yml/badge.svg)
-![Documentation](https://github.com/efischer19/llm-clutch/actions/workflows/documentation.yml/badge.svg)
+## Why llm-clutch?
 
-## What Is This?
+Running a local multi-node AI cluster (e.g., using [Exo](https://github.com/exo-explore/exo)) presents a fundamental tradeoff:
 
-This is a **GitHub template repository** for bootstrapping Python monorepo
-projects. It provides the directory structure, tooling decisions, and
-configuration needed for a well-organized Python project using modern tools
-and best practices.
+- **A fast, efficient model** (like Qwen3-Next-80B) is great for everyday tasks
+- **A heavyweight reasoning model** (like GPT-OSS-120B) is needed for complex agentic workflows
 
-Built on the [blueprint-repo-blueprints](https://github.com/efischer19/blueprint-repo-blueprints)
-foundation, this template adds Python-specific structure, tooling ADRs, and
-development conventions.
+The problem: Copying 75GB+ model weights across your network or reading them from a slow NAS takes 10-15 minutes, stalling your agent.
 
-## How to Use This Template
+**llm-clutch solves this** by managing high-speed hot-swaps using a Thunderbolt-bridged NFS architecture. More importantly, it acts as a traffic cop (a "synchromesh") that verifies cluster topology and available unified memory *before* dropping the current model and loading the new one, preventing cluster crashes.
 
-1. Click the **"Use this template"** button at the top of the repository
-   page on GitHub.
-2. Choose a name for your new repository.
-3. Clone your new repository and begin adding your applications and
-   libraries.
+The package uses a **manual transmission metaphor** to make model state management intuitive:
+- **rev_match()** — Pre-flight safety check that the cluster is online and has enough memory
+- **disengage()** — Unload the current model
+- **engage()** — Load a new model
+- **upshift()** — Move from daily-driver to heavy-reasoning model
+- **downshift()** — Return to the fast daily driver
 
-For more details on GitHub template repositories, see the
-[official documentation](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository).
+## Quick Start
 
-## What's Included
-
-| Path | Purpose |
-| :--- | :--- |
-| `apps/` | Standalone Python applications, each with its own `pyproject.toml` |
-| `libs/` | Shared Python libraries used across applications |
-| `testing/` | Shared test utilities, fixtures, and helpers |
-| `scripts/` | Utility and automation scripts |
-| `templates/` | Template files for scaffolding new apps and libs |
-| `meta/adr/` | Architecture Decision Records — the logbook of *why* decisions were made |
-| `meta/plans/` | Project plans and roadmaps |
-| `docs-src/` | Source files for generated documentation (MkDocs) |
-| `.github/` | GitHub-specific configuration (issue templates, PR templates, CI workflows) |
-
-### Key Tooling Decisions (ADRs)
-
-| ADR | Decision |
-| :--- | :--- |
-| [ADR-002](meta/adr/ADR-002-use_python312.md) | Python 3.12+ as minimum version |
-| [ADR-015](meta/adr/ADR-015-use_uv.md) | uv for dependency management |
-| [ADR-004](meta/adr/ADR-004-use_pytest.md) | pytest for testing |
-| [ADR-005](meta/adr/ADR-005-use_ruff.md) | Ruff for linting and formatting |
-| [ADR-006](meta/adr/ADR-006-use_docker.md) | Docker for containerization |
-| [ADR-007](meta/adr/ADR-007-monorepo_apps_structure.md) | Monorepo /apps structure |
-
-See `meta/adr/` for the full list of Architecture Decision Records.
-
-### Key Files
-
-* **`LICENSE.md`** — MIT License
-* **`CODE_OF_CONDUCT.md`** — Contributor Covenant Code of Conduct
-* **`SECURITY.md`** — Security policy and vulnerability reporting
-* **`CONTRIBUTING.md`** — Guidelines for contributing to the project
-* **`.python-version`** — Python version specification (3.12)
-
-## Getting Started
-
-After creating a new repository from this template:
-
-### 1. Replace Template Placeholders
-
-Search the repository for the following placeholders and replace them with
-values appropriate for your project:
-
-| Placeholder | Description | Example |
-| :--- | :--- | :--- |
-| `{{PROJECT_NAME}}` | Your repository / project name | `my-python-project` |
-| `{{GITHUB_OWNER}}` | GitHub username or organization | `my-org` |
-| `{{APP_NAME}}` | Application directory name (in `apps/`) | `api-service` |
-| `{{LIB_NAME}}` | Library directory name (in `libs/`) | `core-utils` |
-
-### 2. Set Up Local Development
+### Installation
 
 ```bash
-# Install Python 3.12+ (use pyenv or your preferred method)
-pyenv install 3.12
-pyenv local 3.12
-
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install pre-commit hooks
-pip install pre-commit
-pre-commit install
-
-# Run local quality checks
-./scripts/local-ci-check.sh
-
-# Build documentation (optional)
-pip install -r docs-requirements.txt
-./scripts/build-docs.sh
+pip install llm-clutch
 ```
 
-### 3. Create Your First Application
+### Basic Usage
+
+**Python API:**
+```python
+import asyncio
+from llm_clutch import LLMClutch
+from llm_clutch.backend.exo import ExoBackend
+from llm_clutch.core.infra import InfraManager
+
+async def main():
+    # Configure your cluster
+    backend = ExoBackend(base_url="http://10.0.0.1:52415")
+    infra = InfraManager(node_ips=["10.0.0.1", "10.0.0.2", "10.0.0.3"])
+    
+    # Create the clutch engine
+    clutch = LLMClutch(backend=backend, infra_manager=infra)
+    
+    # Upshift to the reasoning model
+    result = await clutch.upshift(
+        heavy_model="GPT-OSS-120B",
+        required_ram=75_000_000_000  # 75GB
+    )
+    
+    if result.success:
+        print(f"Successfully loaded {result.new_model}")
+    else:
+        print(f"Upshift failed: {result.error}")
+    
+    # Downshift back to the daily driver
+    result = await clutch.downshift(
+        light_model="Qwen3-Next-80B",
+        required_ram=50_000_000_000
+    )
+
+asyncio.run(main())
+```
+
+**CLI Usage:**
+```bash
+# Check cluster status
+clutch status
+
+# Upshift to reasoning model
+clutch upshift "GPT-OSS-120B" --ram 75000000000
+
+# Downshift back to daily driver
+clutch downshift "Qwen3-Next-80B" --ram 50000000000
+
+# Emergency reset
+clutch emergency-reset
+```
+
+## Supported Backends
+
+### Exo (v1.0)
+The primary backend for llm-clutch v1.0. [Exo](https://github.com/exo-explore/exo) is a distributed inference framework that splits large language models across multiple nodes.
+
+**Configuration:**
+```toml
+[llm_clutch]
+exo_api_url = "http://10.0.0.1:52415"
+node_ips = ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
+```
+
+### Implementing a Custom Backend
+To add support for a different LLM runner, implement the `ModelBackend` abstract class:
+
+```python
+from llm_clutch.backend.base import ModelBackend
+
+class MyBackend(ModelBackend):
+    async def load_model(self, model_name: str) -> None:
+        """Load model into cluster memory."""
+        pass
+    
+    async def unload_model(self) -> None:
+        """Unload currently active model."""
+        pass
+    
+    async def get_available_memory(self) -> int:
+        """Return available unified memory in bytes."""
+        pass
+    
+    async def get_active_model(self) -> str | None:
+        """Return the name of the currently loaded model."""
+        pass
+```
+
+See the [API Reference](https://efischer19.github.io/llm-clutch/api/backend/) for details.
+
+## Hardware Setup (Optional but Recommended)
+
+For optimal performance, llm-clutch can leverage a high-speed **Thunderbolt-over-NFS architecture** to load models in under 60 seconds. This setup is **optional** — llm-clutch works with any cluster topology, but performance will depend on your network.
+
+See the [Hardware Guide](https://efischer19.github.io/llm-clutch/hardware-guide/) for setup instructions tailored to your infrastructure.
+
+## Documentation
+
+- **[Full Documentation](https://efischer19.github.io/llm-clutch/)** — Complete guides, API reference, and configuration
+- **[Hardware Guide](https://efischer19.github.io/llm-clutch/hardware-guide/)** — Setting up fast model transfer infrastructure
+- **[CLI Reference](https://efischer19.github.io/llm-clutch/cli/)** — All CLI commands with examples
+- **[API Reference](https://efischer19.github.io/llm-clutch/api/)** — Detailed class and method documentation
+- **[Configuration Guide](https://efischer19.github.io/llm-clutch/config/)** — TOML format and environment variables
+
+## Contributing
+
+We welcome contributions! To set up a development environment:
+
+### Prerequisites
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (replaces pip, venv, and pyproject.toml parsers)
+
+### Setup
 
 ```bash
-mkdir -p apps/my-app
-cd apps/my-app
-uv init --package
-mkdir -p tests
+# Clone the repository
+git clone https://github.com/efischer19/llm-clutch.git
+cd llm-clutch
+
+# Install dependencies with uv
+uv sync
+
+# Run tests
+uv run pytest
+
+# Run linting
+uv run ruff check .
+uv run ruff format --check .
+
+# Build docs locally
+uv run -d docs-requirements.txt mkdocs serve
 ```
 
-### 4. Verify CI
+### Code Style
+- Use [Ruff](https://docs.astral.sh/ruff/) for linting and formatting (automatic on commit via pre-commit hooks)
+- Write comprehensive docstrings following [PEP 257](https://peps.python.org/pep-0257/)
+- Include type hints for all function arguments and return values
+- Add tests for all new functionality
 
-Push a change or open a pull request to confirm the CI workflow runs and
-passes in your new repository.
-
-## Design Principles
-
-* **Python 3.12+ only.** Take advantage of modern Python features and
-  performance improvements.
-* **uv everywhere.** Consistent dependency management across all apps
-  and libraries with dramatically faster dependency resolution.
-* **Ruff for speed.** Fast linting and formatting that replaces multiple
-  tools.
-* **Documentation-first.** Every significant decision is captured in an ADR.
-* **AI-friendly.** The structure and conventions are designed to work well
-  with AI-assisted development workflows.
+See the repository's [Development Philosophy](meta/DEVELOPMENT_PHILOSOPHY.md) and [Contributing Guide](https://efischer19.github.io/llm-clutch/contributing/) for more details.
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE.md).
+Licensed under the MIT License. See [LICENSE](LICENSE.md) for details.
+

@@ -1,6 +1,6 @@
-site_name: "{{PROJECT_NAME}} Documentation"
-site_description: "Documentation for {{PROJECT_NAME}}"
-site_url: "https://{{GITHUB_OWNER}}.github.io/{{PROJECT_NAME}}/"
+site_name: "llm-clutch Documentation"
+site_description: "Documentation for llm-clutch"
+site_url: "https://efischer19.github.io/llm-clutch/"
 docs_dir: docs-src
 
 theme:
@@ -20,8 +20,8 @@ plugins:
 nav:
   - Home: index.md
   - llm-clutch:
-      - Overview: https://github.com/efischer19/llm-clutch/tree/main/libs/llm-clutch#readme
-      - Quick Start: https://github.com/efischer19/llm-clutch/tree/main/libs/llm-clutch#quick-start
+      - Overview: https://github.com/efischer19/llm-clutch#readme
+      - Quick Start: https://github.com/efischer19/llm-clutch#quick-start
       - Hardware Guide: HARDWARE_GUIDE.md
       - CLI Reference: cli.md
       - API Reference:
@@ -53,4 +53,4 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: "https://github.com/{{GITHUB_OWNER}}/{{PROJECT_NAME}}"
+      link: "https://github.com/efischer19/llm-clutch"

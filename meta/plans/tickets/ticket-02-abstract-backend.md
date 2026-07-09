@@ -14,7 +14,7 @@ any specific one.
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/src/llm_clutch/backend/base.py` contains an abstract base class `ModelBackend` using Python's `abc.ABC`
+- [ ] `src/llm_clutch/backend/base.py` contains an abstract base class `ModelBackend` using Python's `abc.ABC`
 - [ ] `ModelBackend` defines the following abstract methods with type hints and docstrings:
   - `async def load_model(self, model_name: str) -> None` — load model weights into cluster memory
   - `async def unload_model(self) -> None` — unload the currently active model

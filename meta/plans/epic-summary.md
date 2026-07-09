@@ -35,7 +35,7 @@ The codebase uses an abstracted backend provider pattern, with Exo as
 the primary v1.0 target:
 
 ```text
-libs/llm-clutch/
+
 └── src/llm_clutch/
     ├── backend/
     │   ├── base.py          # Abstract ModelBackend interface

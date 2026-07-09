@@ -13,7 +13,7 @@ running diagnostics.
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/src/llm_clutch/cli.py` contains a Click command group `clutch`
+- [ ] `src/llm_clutch/cli.py` contains a Click command group `clutch`
 - [ ] `clutch status` — displays current cluster state: active model, node health, available memory
 - [ ] `clutch upshift --model <name> --ram <bytes>` — triggers an upshift to the specified model
 - [ ] `clutch downshift --model <name> --ram <bytes>` — triggers a downshift to the specified model
