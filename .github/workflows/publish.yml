@@ -13,9 +13,6 @@ jobs:
   publish:
     name: Publish llm-clutch to PyPI
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: libs/llm-clutch
 
     steps:
       - name: Checkout code
@@ -24,7 +21,7 @@ jobs:
       - name: Set up Python and uv
         uses: ./.github/actions/setup-python-uv
         with:
-          working-directory: libs/llm-clutch
+          working-directory: .
 
       - name: Build package
         run: uv build

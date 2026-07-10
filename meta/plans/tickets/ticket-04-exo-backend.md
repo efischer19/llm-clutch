@@ -13,7 +13,7 @@ lifecycle operations across the cluster.
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/src/llm_clutch/backend/exo.py` contains an `ExoBackend` class that extends `ModelBackend`
+- [ ] `src/llm_clutch/backend/exo.py` contains an `ExoBackend` class that extends `ModelBackend`
 - [ ] `ExoBackend.__init__` accepts the Exo API base URL (e.g., `http://10.0.0.1:52415`) and an optional `httpx.AsyncClient`
 - [ ] `load_model()` calls the Exo API to load model weights into the cluster
 - [ ] `unload_model()` calls the Exo API to unload the current model

@@ -11,23 +11,9 @@ updates:
         patterns:
           - "*"
 
-  # Monitor pip dependencies for example-app
-  - package-ecosystem: "pip"
-    directory: "/apps/example-app"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-
-  # Monitor pip dependencies for example-lib
-  - package-ecosystem: "pip"
-    directory: "/libs/example-lib"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-
   # Monitor pip dependencies for llm-clutch
   - package-ecosystem: "pip"
-    directory: "/libs/llm-clutch"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

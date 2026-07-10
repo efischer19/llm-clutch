@@ -16,7 +16,7 @@ import respx
 from llm_clutch.backend.base import ModelBackend
 from llm_clutch.backend.exo import ExoBackend
 from llm_clutch.core.clutch import LLMClutch
-from llm_clutch.core.infra import InfraManager, NodeStatus
+from llm_clutch.core.infra import InfraManager
 
 
 class MockModelBackend(ModelBackend):

@@ -13,7 +13,7 @@ model shift is attempted, preventing shifts into a degraded cluster.
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/src/llm_clutch/core/infra.py` contains an `InfraManager` class
+- [ ] `src/llm_clutch/core/infra.py` contains an `InfraManager` class
 - [ ] `InfraManager` accepts a configuration of target node IPs (e.g., `["10.0.0.1", "10.0.0.2", "10.0.0.3"]`)
 - [ ] Implements `async def check_node(self, ip: str) -> NodeStatus` — checks if a single node is reachable via TCP socket probe
 - [ ] Implements `async def check_all_nodes(self) -> list[NodeStatus]` — checks all configured nodes concurrently using `asyncio.gather`

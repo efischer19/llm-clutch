@@ -14,7 +14,7 @@ all llm-clutch tests.
 
 ## Acceptance Criteria
 
-- [ ] Shared fixtures exist in `testing/` (or `libs/llm-clutch/tests/conftest.py`) that are importable by all test modules
+- [ ] Shared fixtures exist in `testing/` (or `tests/conftest.py`) that are importable by all test modules
 - [ ] A `mock_exo_backend` fixture provides a `ModelBackend` implementation with configurable behavior (success, failure, latency simulation)
 - [ ] A `mock_infra_manager` fixture provides an `InfraManager` with configurable node responses (all up, partial failure, total failure)
 - [ ] HTTP-level mocks exist for the Exo API endpoints using `respx` or `pytest-httpx`, simulating: model load success/failure, model unload, topology query, health check

@@ -14,7 +14,7 @@ model, then downshifting when the task is complete.
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/src/llm_clutch/integrations/openclaw.py` contains tool definition(s) compatible with OpenClaw's tool schema
+- [ ] `src/llm_clutch/integrations/openclaw.py` contains tool definition(s) compatible with OpenClaw's tool schema
 - [ ] An `upshift_tool` definition exposes `upshift()` with parameters: `model_name` (str), `required_ram` (int), and optional `reason` (str, for audit logging)
 - [ ] A `downshift_tool` definition exposes `downshift()` with the same parameter shape
 - [ ] A `status_tool` definition exposes `status()` so the agent can inspect cluster state before deciding to shift

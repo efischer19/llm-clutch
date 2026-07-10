@@ -1,13 +1,13 @@
 # Local Development Dependencies
 
-> Tools required for local development in this monorepo.
+> Tools required for local development.
 
 ## Required Tools
 
 | Tool | Version | Purpose | Install |
 | :--- | :--- | :--- | :--- |
 | **Python** | 3.12+ | Runtime | [python.org](https://www.python.org/) or `pyenv install 3.12` |
-| **Poetry** | 2.x | Dependency management | [install.python-poetry.org](https://install.python-poetry.org) |
+| **uv** | 0.1.x+ | Dependency management | [astral.sh/uv](https://docs.astral.sh/uv/) |
 | **Git** | 2.x | Version control | [git-scm.com](https://git-scm.com/) |
 
 ## Recommended Tools
@@ -26,15 +26,15 @@
 pyenv install 3.12
 pyenv local 3.12
 
-# 2. Install Poetry
-curl -sSL https://install.python-poetry.org | python3 -
+# 2. Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 3. Install pre-commit hooks
 pip install pre-commit
 pre-commit install
 
 # 4. Install all project dependencies
-python scripts/setup-local-deps.py
+uv sync
 
 # 5. Verify everything works
 ./scripts/local-ci-check.sh
@@ -44,7 +44,7 @@ python scripts/setup-local-deps.py
 
 The minimum Python version for this project is **3.12**, as specified in
 `.python-version` and documented in
-[ADR-002](https://github.com/{{GITHUB_OWNER}}/{{PROJECT_NAME}}/blob/main/meta/adr/ADR-002-use_python312.md).
+[ADR-002](meta/adr/ADR-002-use_python312.md).
 
 Use `pyenv` to manage Python versions:
 
@@ -54,41 +54,45 @@ pyenv local 3.12
 python --version  # Should output Python 3.12.x
 ```
 
-## Poetry
+## uv
 
-Poetry manages dependencies, virtual environments, and package metadata for
-each application and library in the monorepo. See
-[ADR-003](https://github.com/{{GITHUB_OWNER}}/{{PROJECT_NAME}}/blob/main/meta/adr/ADR-003-use_poetry.md).
+uv is a fast Python package manager. See
+[ADR-015](meta/adr/ADR-015-use_uv.md).
 
 ```bash
-# Install Poetry
-curl -sSL https://install.python-poetry.org | python3 -
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install a project's dependencies
-cd apps/example-app
-poetry install
+# Install project dependencies
+uv sync
 
 # Run a command in the project's virtual environment
-poetry run pytest
+uv run pytest
+
+# Run formatting
+uv run ruff format .
+
+# Run linting
+uv run ruff check .
 ```
 
 ## Ruff
 
 Ruff handles both linting and formatting for Python code. See
-[ADR-005](https://github.com/{{GITHUB_OWNER}}/{{PROJECT_NAME}}/blob/main/meta/adr/ADR-005-use_ruff.md).
+[ADR-005](meta/adr/ADR-005-use_ruff.md).
 
 ```bash
 # Check formatting
-poetry run ruff format --check .
+uv run ruff format --check .
 
 # Auto-format
-poetry run ruff format .
+uv run ruff format .
 
 # Lint
-poetry run ruff check .
+uv run ruff check .
 
 # Lint with auto-fix
-poetry run ruff check --fix .
+uv run ruff check --fix .
 ```
 
 ## Pre-commit

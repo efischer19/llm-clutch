@@ -13,7 +13,7 @@ transmission-metaphor API (`rev_match`, `disengage`, `engage`, `upshift`,
 
 ## Acceptance Criteria
 
-- [ ] `libs/llm-clutch/src/llm_clutch/core/clutch.py` contains the `LLMClutch` class
+- [ ] `src/llm_clutch/core/clutch.py` contains the `LLMClutch` class
 - [ ] `LLMClutch.__init__` accepts a `ModelBackend` instance, an `InfraManager` instance, and optional configuration (min_nodes, default models)
 - [ ] Implements `async def rev_match(self, required_ram: int) -> bool` — checks topology and available memory, returns True if the cluster can accept a model of the given size
 - [ ] Implements `async def disengage(self) -> None` — calls `backend.unload_model()` with safety checks

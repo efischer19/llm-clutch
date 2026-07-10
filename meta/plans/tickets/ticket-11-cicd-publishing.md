@@ -13,13 +13,13 @@ publishing pipeline so the package can be released with version tags.
 ## Acceptance Criteria
 
 - [ ] The CI composite action is updated (or a new one created) to support uv instead of Poetry: installs uv, creates `.venv`, caches dependencies
-- [ ] `ci.yml` workflow runs for `libs/llm-clutch/`: `uv run ruff format --check .`, `uv run ruff check .`, `uv run pytest`
+- [ ] `ci.yml` workflow runs for ``: `uv run ruff format --check .`, `uv run ruff check .`, `uv run pytest`
 - [ ] `publish.yml` workflow is updated to use `uv build` and `uv publish` for PyPI releases
 - [ ] The publish workflow triggers on version tags (e.g., `v0.1.0`) and manual dispatch
 - [ ] PyPI publishing requires the `PYPI_TOKEN` secret (documented but not committed)
 - [ ] Docker workflow is updated if llm-clutch includes a Dockerfile (optional for a library)
 - [ ] Documentation workflow (`documentation.yml`) builds and deploys updated docs on push to `main`
-- [ ] Dependabot configuration is updated to monitor `libs/llm-clutch/` dependencies
+- [ ] Dependabot configuration is updated to monitor `` dependencies
 - [ ] All workflows pass on a test PR
 - [ ] `README.md` includes CI status badges
 
@@ -43,7 +43,7 @@ publishing pipeline so the package can be released with version tags.
 - Consider adding a `test-publish` job that publishes to TestPyPI on PRs
   to validate the packaging before real releases.
 - Update `.github/dependabot.yml` to add a `pip` entry for
-  `libs/llm-clutch/`.
+  ``.
 - ADR-014 references Poetry throughout — once ADR-015 is accepted, the
   CI/CD strategy ADR may also need updating to reflect uv. This can be
   a follow-up or handled in this ticket.
